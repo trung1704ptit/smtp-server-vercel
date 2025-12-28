@@ -22,6 +22,10 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    console.log('to: ', to);
+    console.log('subject: ', subject);
+    console.log('text: ', text);
+
     await transporter.sendMail({
       from: process.env.SMTP_FROM,
       to,
