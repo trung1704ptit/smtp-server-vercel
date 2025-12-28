@@ -30,7 +30,7 @@ export function middleware(req: NextRequest) {
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return NextResponse.json(
-      { message: 'Missing Authorization header' },
+      { message: 'Unauthorized' },
       { status: 401 }
     );
   }
