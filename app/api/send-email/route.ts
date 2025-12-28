@@ -1,23 +1,27 @@
-// pages/api/send-email.ts
-import type { NextApiRequest, NextApiResponse } from "next";
-import nodemailer from "nodemailer";
+import { NextRequest, NextResponse } from 'next/server';
+import nodemailer from 'nodemailer';
 
-export async function POST(req: NextApiRequest, res: NextApiResponse) {
-  const { to, subject, text, html } = req.body;
-
+export async function POST(req: NextRequest) {
   try {
-    // Create transporter
+    const { to, subject, text, html } = await req.json();
+
+    if (!to || !subject) {
+      return NextResponse.json(
+        { message: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT),
-      secure: Number(process.env.SMTP_PORT) === 465, // true for 465, false for other ports
+      secure: Number(process.env.SMTP_PORT) === 465,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
     });
 
-    // Send email
     await transporter.sendMail({
       from: process.env.SMTP_FROM,
       to,
@@ -26,9 +30,16 @@ export async function POST(req: NextApiRequest, res: NextApiResponse) {
       html,
     });
 
-    res.status(200).json({ message: "Email sent successfully" });
+    return NextResponse.json(
+      { message: 'Email sent successfully' },
+      { status: 200 }
+    );
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error sending email", error });
+    console.error('Send email error:', error);
+
+    return NextResponse.json(
+      { message: 'Error sending email' },
+      { status: 500 }
+    );
   }
 }
