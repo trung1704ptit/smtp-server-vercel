@@ -1,24 +1,53 @@
-// middleware.ts
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+const PUBLIC_API_ROUTES = new Set<string>([
+]);
 
 export function middleware(req: NextRequest) {
-  const url = req.nextUrl.clone();
+  const { pathname } = req.nextUrl;
 
-  // Example: Only allow public access to /api/send-email
-  if (url.pathname === "/api/send-email") {
-    // Just let it through
+  // Only protect /api/*
+  if (!pathname.startsWith('/api/')) {
     return NextResponse.next();
   }
 
-  // You can add auth or other logic for other routes here
-  // For example, block everything else (optional)
-  // return NextResponse.redirect(new URL("/login", req.url));
+  // Allow public API routes
+  if (PUBLIC_API_ROUTES.has(pathname)) {
+    return NextResponse.next();
+  }
+
+  const authHeader = req.headers.get('authorization');
+  const expectedToken = process.env.API_TOKEN;
+
+  if (!expectedToken) {
+    console.error('API_TOKEN is not set');
+    return NextResponse.json(
+      { message: 'Server misconfiguration' },
+      { status: 500 }
+    );
+  }
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return NextResponse.json(
+      { message: 'Missing Authorization header' },
+      { status: 401 }
+    );
+  }
+
+  const token = authHeader.substring('Bearer '.length);
+
+  if (token !== expectedToken) {
+    return NextResponse.json(
+      { message: 'Invalid token' },
+      { status: 403 }
+    );
+  }
 
   return NextResponse.next();
 }
 
-// Apply middleware to API routes (or all routes)
+// Apply middleware only to API routes
 export const config = {
-  matcher: ["/api/:path*"], // runs middleware on all API routes
+  matcher: ['/api/:path*'],
 };
