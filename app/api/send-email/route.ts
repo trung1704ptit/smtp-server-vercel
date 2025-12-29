@@ -13,6 +13,8 @@ export async function POST(req: NextRequest) {
     }
 
     const transporter = nodemailer.createTransport({
+      pool: true,
+      maxMessages: 50,
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT),
       secure: Number(process.env.SMTP_PORT) === 465,
@@ -21,10 +23,6 @@ export async function POST(req: NextRequest) {
         pass: process.env.SMTP_PASS,
       },
     });
-
-    console.log('to: ', to);
-    console.log('subject: ', subject);
-    console.log('text: ', text);
 
     await transporter.sendMail({
       from: process.env.SMTP_FROM,
